@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react'
 import sourceHtml from '../tech-hall-pocket (1).html?raw'
 import sourceHtmlEn from '../tech-hall-pocket.en.html?raw'
+import sourceHtmlPepsico from '../pepsico.html?raw'
 
 function extractDocumentParts(html) {
   const parser = new DOMParser()
@@ -14,15 +15,22 @@ function extractDocumentParts(html) {
 }
 
 export default function App() {
-  const isEnglish = useMemo(() => {
+  const view = useMemo(() => {
     const params = new URLSearchParams(window.location.search)
-    return params.get('lang') === 'en' || window.location.pathname.endsWith('/en')
+    const path = window.location.pathname
+    if (params.get('cliente') === 'pepsico' || path.endsWith('/pepsico')) return 'pepsico'
+    if (params.get('lang') === 'en' || path.endsWith('/en')) return 'en'
+    return 'pt'
   }, [])
 
-  const { style, body, lang, title } = useMemo(
-    () => extractDocumentParts(isEnglish ? sourceHtmlEn : sourceHtml),
-    [isEnglish],
-  )
+  const { style, body, lang, title } = useMemo(() => {
+    const source =
+      view === 'pepsico' ? sourceHtmlPepsico : view === 'en' ? sourceHtmlEn : sourceHtml
+    const parts = extractDocumentParts(source)
+    // A página PepsiCo reaproveita o CSS do site principal (não tem <style> próprio).
+    const style = parts.style || extractDocumentParts(sourceHtml).style
+    return { ...parts, style }
+  }, [view])
 
   useEffect(() => {
     const previousLang = document.documentElement.lang
